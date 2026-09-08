@@ -606,6 +606,10 @@
 #include <utility>
 #include <vector>
 
+#if ARGPARSE_HAS_CONCEPTS
+    #include <concepts>
+#endif
+
 namespace argparse {
 
 template <bool B, typename T = void>
@@ -620,8 +624,6 @@ template <typename T, typename = void>
 struct value_parser;
 
 #if ARGPARSE_HAS_CONCEPTS
-    #include <concepts>
-
     template <typename T>
     concept parsable = requires(string_view sv) {
         { value_parser<T>::parse(sv) } -> std::same_as<expected<T, parse_error>>;
