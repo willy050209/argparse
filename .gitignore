@@ -1,0 +1,13 @@
+build/
+build-*/
+.cache/
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.user
+.vs/
+bin/
+lib/
+__pycache__/
+*.pyc

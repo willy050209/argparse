@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-release:
+    name: Generate Single-Header & Release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate Single Header
+        run: python3 scripts/amalgamate.py
+
+      - name: Verify Single Header Build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14
+          g++-14 -std=c++23 -Wall -Wextra -Werror -I single_include \
+            tests/test_single_header.cpp -o test_single_header
+          ./test_single_header
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            single_include/argparse/argparse.hpp
+          generate_release_notes: true
+          draft: false
+          prerelease: false
