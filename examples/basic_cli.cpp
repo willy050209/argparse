@@ -1,8 +1,7 @@
 #include <argparse/argparse.hpp>
-#include <iostream>
 
 int main(int argc, char* argv[]) {
-    argparse::argument_parser program("basic_cli", "A modern C++23 example CLI application");
+    argparse::argument_parser program("basic_cli", "A modern C++ example CLI application");
 
     program.add_argument("--name", "-n")
         .help("Your name")
@@ -28,11 +27,11 @@ int main(int argc, char* argv[]) {
     bool verbose = result.get<bool>("--verbose");
 
     if (verbose) {
-        std::cout << "[VERBOSE] Preparing greeting for " << name << " targeting " << target << "\n";
+        argparse::println("[VERBOSE] Preparing greeting for {} targeting {}", name, target);
     }
 
     for (int32_t i = 0; i < count; ++i) {
-        std::cout << "Hello, " << name << "! Welcome to " << target << "!\n";
+        argparse::println("Hello, {}! Welcome to {}!", name, target);
     }
 
     return 0;

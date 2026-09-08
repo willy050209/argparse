@@ -10,6 +10,7 @@ add_argparse_test(test_primitive_parsing)
 add_argparse_test(test_flag_chaining)
 add_argparse_test(test_constraints)
 add_argparse_test(test_error_handling)
+add_argparse_test(test_model_export)
 
 # Single-header test target
 add_executable(test_single_header test_single_header.cpp)

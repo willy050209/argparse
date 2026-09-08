@@ -1,11 +1,10 @@
 #pragma once
 
 #include <exception>
-#include <format>
 #include <functional>
 #include <iostream>
+#include <sstream>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -21,8 +20,8 @@ inline std::vector<test_case>& registry() {
     return tests;
 }
 
-inline bool register_test(std::string_view name, std::function<void()> func) {
-    registry().push_back(test_case{std::string(name), std::move(func)});
+inline bool register_test(const std::string& name, std::function<void()> func) {
+    registry().push_back(test_case{name, std::move(func)});
     return true;
 }
 
@@ -66,39 +65,51 @@ struct assertion_failure : public std::exception {
 
 } // namespace test_framework
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define ARGPARSE_UNUSED_TEST __attribute__((unused))
+#else
+    #define ARGPARSE_UNUSED_TEST
+#endif
+
 #define TEST_CASE(name) \
-    static void name(); \
-    static const bool name##_registered = ::test_framework::register_test(#name, name); \
+    static void name() ARGPARSE_UNUSED_TEST; \
+    namespace { \
+        const bool name##_registered ARGPARSE_UNUSED_TEST = ::test_framework::register_test(#name, name); \
+    } \
     static void name()
 
 #define ASSERT_TRUE(expr) \
     do { \
         if (!(expr)) { \
-            throw ::test_framework::assertion_failure( \
-                std::format("Assertion failed: ({}) at {}:{}", #expr, __FILE__, __LINE__)); \
+            std::ostringstream oss; \
+            oss << "Assertion failed: (" << #expr << ") at " << __FILE__ << ":" << __LINE__; \
+            throw ::test_framework::assertion_failure(oss.str()); \
         } \
     } while (false)
 
 #define ASSERT_FALSE(expr) \
     do { \
         if (expr) { \
-            throw ::test_framework::assertion_failure( \
-                std::format("Assertion failed: !({}) at {}:{}", #expr, __FILE__, __LINE__)); \
+            std::ostringstream oss; \
+            oss << "Assertion failed: !(" << #expr << ") at " << __FILE__ << ":" << __LINE__; \
+            throw ::test_framework::assertion_failure(oss.str()); \
         } \
     } while (false)
 
 #define ASSERT_EQ(lhs, rhs) \
     do { \
         if (!((lhs) == (rhs))) { \
-            throw ::test_framework::assertion_failure( \
-                std::format("Assertion failed: {} == {} at {}:{}", #lhs, #rhs, __FILE__, __LINE__)); \
+            std::ostringstream oss; \
+            oss << "Assertion failed: " << #lhs << " == " << #rhs << " at " << __FILE__ << ":" << __LINE__; \
+            throw ::test_framework::assertion_failure(oss.str()); \
         } \
     } while (false)
 
 #define ASSERT_NE(lhs, rhs) \
     do { \
         if ((lhs) == (rhs)) { \
-            throw ::test_framework::assertion_failure( \
-                std::format("Assertion failed: {} != {} at {}:{}", #lhs, #rhs, __FILE__, __LINE__)); \
+            std::ostringstream oss; \
+            oss << "Assertion failed: " << #lhs << " != " << #rhs << " at " << __FILE__ << ":" << __LINE__; \
+            throw ::test_framework::assertion_failure(oss.str()); \
         } \
     } while (false)

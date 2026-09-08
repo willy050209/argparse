@@ -3,13 +3,15 @@ cmake_minimum_required(VERSION 3.28)
 project(
     argparse
     VERSION 1.0.0
-    DESCRIPTION "High-performance, type-safe, zero-overhead C++23 command-line argument parser"
+    DESCRIPTION "High-performance, type-safe, multi-standard (C++11/17/20/23) command-line argument parser"
     HOMEPAGE_URL "https://github.com/modern-cpp/argparse"
     LANGUAGES CXX
 )
 
-# Standard C++23 configuration
-set(CMAKE_CXX_STANDARD 23)
+# Standard C++ configuration (Default 23, but supports 11, 17, 20)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 23)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -21,8 +23,6 @@ option(ARGPARSE_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 # Define header-only interface library
 add_library(argparse INTERFACE)
 add_library(argparse::argparse ALIAS argparse)
-
-target_compile_features(argparse INTERFACE cxx_std_23)
 
 target_include_directories(argparse INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -45,8 +45,6 @@ else()
         -Wall
         -Wextra
         -Wpedantic
-        -Wconversion
-        -Wsign-conversion
         $<$<BOOL:${ARGPARSE_WARNINGS_AS_ERRORS}>:-Werror>
     )
 endif()

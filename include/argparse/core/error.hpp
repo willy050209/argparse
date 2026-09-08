@@ -1,9 +1,15 @@
 #pragma once
 
+#include <argparse/compat/detect.hpp>
+#include <argparse/compat/string_view.hpp>
+
 #include <cstdint>
-#include <format>
+#include <sstream>
 #include <string>
-#include <string_view>
+
+#if ARGPARSE_HAS_STD_FORMAT
+    #include <format>
+#endif
 
 namespace argparse {
 
@@ -22,7 +28,7 @@ enum class error_code : uint8_t {
     choice_not_allowed
 };
 
-[[nodiscard]] constexpr std::string_view to_string_view(error_code code) noexcept {
+[[nodiscard]] inline ARGPARSE_CONSTEXPR14 string_view to_string_view(error_code code) noexcept {
     switch (code) {
         case error_code::success:
             return "success";
@@ -57,14 +63,15 @@ struct parse_error {
 
     constexpr parse_error() noexcept = default;
 
-    constexpr parse_error(error_code c, std::string_view arg_name, std::string_view tok, std::string msg)
-        : code(c), argument_name(arg_name), token(tok), message(std::move(msg)) {}
+    parse_error(error_code c, string_view arg_name, string_view tok, std::string msg)
+        : code(c), argument_name(arg_name.data(), arg_name.size()), token(tok.data(), tok.size()), message(std::move(msg)) {}
 
-    constexpr parse_error(error_code c, std::string_view tok, std::string msg)
-        : code(c), argument_name(""), token(tok), message(std::move(msg)) {}
+    parse_error(error_code c, string_view tok, std::string msg)
+        : code(c), argument_name(""), token(tok.data(), tok.size()), message(std::move(msg)) {}
 
     [[nodiscard]] std::string to_string() const {
-        std::string result = std::format("Error [{}]: {}", to_string_view(code), message);
+#if ARGPARSE_HAS_STD_FORMAT
+        std::string result = std::format("Error [{}]: {}", std::string_view(to_string_view(code).data(), to_string_view(code).size()), message);
         if (!argument_name.empty()) {
             result += std::format(" (argument: '{}')", argument_name);
         }
@@ -72,6 +79,17 @@ struct parse_error {
             result += std::format(" (token: '{}')", token);
         }
         return result;
+#else
+        std::ostringstream oss;
+        oss << "Error [" << to_string_view(code) << "]: " << message;
+        if (!argument_name.empty()) {
+            oss << " (argument: '" << argument_name << "')";
+        }
+        if (!token.empty()) {
+            oss << " (token: '" << token << "')";
+        }
+        return oss.str();
+#endif
     }
 
     [[nodiscard]] bool operator==(const parse_error& other) const noexcept {

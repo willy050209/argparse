@@ -5,7 +5,7 @@ TEST_CASE(test_required_argument_missing) {
     argparse::argument_parser parser("test");
     parser.add_argument("--config", "-c").required(true);
 
-    std::vector<std::string_view> args = {};
+    std::vector<argparse::string_view> args = {};
     auto res = parser.parse_args(args);
 
     ASSERT_FALSE(res.has_value());
@@ -18,15 +18,15 @@ TEST_CASE(test_choices_validation) {
 
     // Valid choice
     {
-        std::vector<std::string_view> valid_args = { "--format", "json" };
+        std::vector<argparse::string_view> valid_args = { "--format", "json" };
         auto res = parser.parse_args(valid_args);
         ASSERT_TRUE(res.has_value());
-        ASSERT_EQ(res->get<std::string>("--format"), "json");
+        ASSERT_EQ((*res).get<std::string>("--format"), "json");
     }
 
     // Invalid choice
     {
-        std::vector<std::string_view> invalid_args = { "--format", "binary" };
+        std::vector<argparse::string_view> invalid_args = { "--format", "binary" };
         auto res = parser.parse_args(invalid_args);
         ASSERT_FALSE(res.has_value());
         ASSERT_EQ(res.error().code, argparse::error_code::choice_not_allowed);
@@ -39,7 +39,7 @@ TEST_CASE(test_mutually_exclusive_group_conflict) {
     group.add_argument("--tcp").flag();
     group.add_argument("--udp").flag();
 
-    std::vector<std::string_view> args = { "--tcp", "--udp" };
+    std::vector<argparse::string_view> args = { "--tcp", "--udp" };
     auto res = parser.parse_args(args);
 
     ASSERT_FALSE(res.has_value());
@@ -48,13 +48,13 @@ TEST_CASE(test_mutually_exclusive_group_conflict) {
 
 TEST_CASE(test_mutually_exclusive_group_required) {
     argparse::argument_parser parser("test");
-    auto& group = parser.add_mutually_exclusive_group(true); // required
+    auto& group = parser.add_mutually_exclusive_group(true);
     group.add_argument("--client").flag();
     group.add_argument("--server").flag();
 
     // Neither provided
     {
-        std::vector<std::string_view> args = {};
+        std::vector<argparse::string_view> args = {};
         auto res = parser.parse_args(args);
         ASSERT_FALSE(res.has_value());
         ASSERT_EQ(res.error().code, argparse::error_code::missing_required_argument);
@@ -62,11 +62,11 @@ TEST_CASE(test_mutually_exclusive_group_required) {
 
     // Exactly one provided
     {
-        std::vector<std::string_view> args = { "--server" };
+        std::vector<argparse::string_view> args = { "--server" };
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
-        ASSERT_TRUE(res->get<bool>("--server"));
-        ASSERT_FALSE(res->has("--client"));
+        ASSERT_TRUE((*res).get<bool>("--server"));
+        ASSERT_FALSE((*res).has("--client"));
     }
 }
 
@@ -80,15 +80,15 @@ TEST_CASE(test_custom_typed_validator) {
 
     // Valid
     {
-        std::vector<std::string_view> args = { "-p", "3000" };
+        std::vector<argparse::string_view> args = { "-p", "3000" };
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
-        ASSERT_EQ(res->get<int32_t>("-p"), 3000);
+        ASSERT_EQ((*res).get<int32_t>("-p"), 3000);
     }
 
     // Invalid (privileged port)
     {
-        std::vector<std::string_view> args = { "-p", "80" };
+        std::vector<argparse::string_view> args = { "-p", "80" };
         auto res = parser.parse_args(args);
         ASSERT_FALSE(res.has_value());
         ASSERT_EQ(res.error().code, argparse::error_code::custom_validation_failed);
@@ -102,21 +102,21 @@ TEST_CASE(test_defaults_and_implicit_values) {
 
     // Both omitted: defaults take effect
     {
-        std::vector<std::string_view> args = {};
+        std::vector<argparse::string_view> args = {};
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
-        ASSERT_EQ(res->get<int32_t>("--timeout"), 30);
-        ASSERT_EQ(res->get<std::string>("--color"), "auto");
-        ASSERT_FALSE(res->is_explicit("--color"));
+        ASSERT_EQ((*res).get<int32_t>("--timeout"), 30);
+        ASSERT_EQ((*res).get<std::string>("--color"), "auto");
+        ASSERT_FALSE((*res).is_explicit("--color"));
     }
 
     // Explicitly provided with value
     {
-        std::vector<std::string_view> args = { "--color", "never" };
+        std::vector<argparse::string_view> args = { "--color", "never" };
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
-        ASSERT_EQ(res->get<std::string>("--color"), "never");
-        ASSERT_TRUE(res->is_explicit("--color"));
+        ASSERT_EQ((*res).get<std::string>("--color"), "never");
+        ASSERT_TRUE((*res).is_explicit("--color"));
     }
 }
 

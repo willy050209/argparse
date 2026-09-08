@@ -1,81 +1,82 @@
 #pragma once
 
+#include <argparse/compat/string_view.hpp>
 #include <argparse/core/token.hpp>
 
-#include <optional>
-#include <string_view>
-#include <vector>
+#include <cctype>
 
 namespace argparse {
 
 class tokenizer {
 public:
-    /**
-     * @brief Classifies an individual CLI argument into a token.
-     */
-    [[nodiscard]] static token tokenize(std::string_view arg) noexcept {
+    [[nodiscard]] static token tokenize(string_view arg) noexcept {
         if (arg == "--") {
             return token{
-                .type = token_type::options_delimiter,
-                .raw = arg,
-                .name = arg,
-                .inline_value = std::nullopt
+                token_type::options_delimiter,
+                arg,
+                arg,
+                false,
+                string_view{}
             };
         }
 
-        if (arg.starts_with("--") && arg.size() > 2) {
+        if (starts_with(arg, "--") && arg.size() > 2) {
             auto eq_pos = arg.find('=');
-            if (eq_pos != std::string_view::npos) {
+            if (eq_pos != string_view::npos) {
                 return token{
-                    .type = token_type::long_option,
-                    .raw = arg,
-                    .name = arg.substr(0, eq_pos),
-                    .inline_value = arg.substr(eq_pos + 1)
+                    token_type::long_option,
+                    arg,
+                    arg.substr(0, eq_pos),
+                    true,
+                    arg.substr(eq_pos + 1)
                 };
             }
             return token{
-                .type = token_type::long_option,
-                .raw = arg,
-                .name = arg,
-                .inline_value = std::nullopt
+                token_type::long_option,
+                arg,
+                arg,
+                false,
+                string_view{}
             };
         }
 
-        if (arg.starts_with('-') && arg.size() > 1) {
-            // Check if this looks like a negative number rather than an option
-            // (e.g. -42, -3.14)
+        if (starts_with(arg, '-') && arg.size() > 1) {
             if (arg.size() > 1 && (std::isdigit(static_cast<unsigned char>(arg[1])))) {
                 return token{
-                    .type = token_type::positional,
-                    .raw = arg,
-                    .name = arg,
-                    .inline_value = std::nullopt
+                    token_type::positional,
+                    arg,
+                    arg,
+                    false,
+                    string_view{}
                 };
             }
 
             auto eq_pos = arg.find('=');
-            if (eq_pos != std::string_view::npos) {
+            if (eq_pos != string_view::npos) {
                 return token{
-                    .type = token_type::short_option,
-                    .raw = arg,
-                    .name = arg.substr(0, eq_pos),
-                    .inline_value = arg.substr(eq_pos + 1)
+                    token_type::short_option,
+                    arg,
+                    arg.substr(0, eq_pos),
+                    true,
+                    arg.substr(eq_pos + 1)
                 };
             }
 
             return token{
-                .type = token_type::short_option,
-                .raw = arg,
-                .name = arg,
-                .inline_value = std::nullopt
+                token_type::short_option,
+                arg,
+                arg,
+                false,
+                string_view{}
             };
         }
 
         return token{
-            .type = token_type::positional,
-            .raw = arg,
-            .name = arg,
-            .inline_value = std::nullopt
+            token_type::positional,
+            arg,
+            arg,
+            false,
+            string_view{}
         };
     }
 };

@@ -1,45 +1,49 @@
 #pragma once
 
+#include <argparse/compat/detect.hpp>
+#include <argparse/compat/expected.hpp>
+#include <argparse/compat/print.hpp>
+#include <argparse/compat/span.hpp>
+#include <argparse/compat/string_view.hpp>
 #include <argparse/config/argument.hpp>
 #include <argparse/config/argument_group.hpp>
 #include <argparse/core/error.hpp>
 #include <argparse/engine/engine.hpp>
 #include <argparse/engine/parse_result.hpp>
 #include <argparse/format/formatter.hpp>
+#include <argparse/model/cli_model.hpp>
 
 #include <cstdlib>
-#include <expected>
 #include <iostream>
-#include <span>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace argparse {
 
 class argument_parser {
 public:
-    explicit argument_parser(std::string_view program_name, std::string_view description = "")
-        : m_program_name(program_name), m_description(description) {
+    explicit argument_parser(string_view program_name, string_view description = "")
+        : m_program_name(program_name.data(), program_name.size()),
+          m_description(description.data(), description.size()) {
         add_argument("--help", "-h").help("Show this help message and exit").flag();
     }
 
-    argument_parser& description(std::string_view desc) {
-        m_description = std::string(desc);
+    argument_parser& description(string_view desc) {
+        m_description = std::string(desc.data(), desc.size());
         return *this;
     }
 
-    argument_parser& epilog(std::string_view epi) {
-        m_epilog = std::string(epi);
+    argument_parser& epilog(string_view epi) {
+        m_epilog = std::string(epi.data(), epi.size());
         return *this;
     }
 
-    argument_parser& version(std::string_view ver) {
-        m_version = std::string(ver);
+    argument_parser& version(string_view ver) {
+        m_version = std::string(ver.data(), ver.size());
         return *this;
     }
 
-    argument& add_argument(std::string_view name, std::string_view short_name = "") {
+    argument& add_argument(string_view name, string_view short_name = "") {
         m_arguments.emplace_back(name, short_name);
         return m_arguments.back();
     }
@@ -57,47 +61,73 @@ public:
     }
 
     [[nodiscard]] std::string format_help() const {
-        return formatter::format_help(m_program_name, m_description, m_epilog, m_arguments, m_groups);
+        return formatter::format_help(string_view(m_program_name), string_view(m_description),
+                                     string_view(m_epilog), m_arguments, m_groups);
     }
 
     [[nodiscard]] std::string format_version() const {
-        return formatter::format_version(m_program_name, m_version);
+        return formatter::format_version(string_view(m_program_name), string_view(m_version));
     }
 
-    /**
-     * @brief Pure functional parse entry point for string_view spans.
-     * Guaranteed noexcept and zero string copies on parse path.
-     */
-    [[nodiscard]] std::expected<parse_result, parse_error>
-    parse_args(std::span<const std::string_view> args) const noexcept {
+    [[nodiscard]] cli_model export_model() const {
+        cli_model model;
+        model.program_name = m_program_name;
+        model.description = m_description;
+        model.epilog = m_epilog;
+        model.version = m_version;
+
+        for (const auto& arg : m_arguments) {
+            argument_model am;
+            am.name = arg.name();
+            am.short_name = arg.short_name();
+            am.help = arg.help();
+            am.metavar = arg.metavar();
+            am.act = arg.get_action();
+            am.is_required = arg.is_required();
+            am.is_flag = arg.is_flag();
+            am.is_positional = arg.is_positional();
+            am.default_value = arg.has_default() ? arg.default_value() : "";
+            am.implicit_value = arg.has_implicit() ? arg.implicit_value() : "";
+            am.choices = arg.get_choices();
+            model.arguments.push_back(std::move(am));
+        }
+
+        for (const auto& grp : m_groups) {
+            if (grp.is_mutually_exclusive()) {
+                model.mutually_exclusive_groups.push_back(grp.argument_names());
+            }
+        }
+        return model;
+    }
+
+    [[nodiscard]] std::string to_json() const {
+        return export_model().to_json();
+    }
+
+    [[nodiscard]] expected<parse_result, parse_error>
+    parse_args(span<const string_view> args) const noexcept {
         return engine::parse(m_arguments, m_groups, args);
     }
 
-    /**
-     * @brief Convenient parse entry point for standard argc/argv.
-     */
-    [[nodiscard]] std::expected<parse_result, parse_error>
+    [[nodiscard]] expected<parse_result, parse_error>
     parse_args(int argc, const char* const* argv) const {
         if (argc <= 1) {
-            return parse_args(std::span<const std::string_view>{});
+            return parse_args(span<const string_view>{});
         }
-        std::vector<std::string_view> views;
+        std::vector<string_view> views;
         views.reserve(static_cast<size_t>(argc - 1));
         for (int i = 1; i < argc; ++i) {
             views.emplace_back(argv[i]);
         }
-        return parse_args(views);
+        return parse_args(span<const string_view>(views));
     }
 
-    /**
-     * @brief Exception-throwing parse variant for script-style applications.
-     */
-    [[nodiscard]] parse_result parse_or_throw(std::span<const std::string_view> args) const {
+    [[nodiscard]] parse_result parse_or_throw(span<const string_view> args) const {
         auto res = parse_args(args);
         if (!res) {
             throw std::runtime_error(res.error().to_string());
         }
-        return std::move(*res);
+        return *res;
     }
 
     [[nodiscard]] parse_result parse_or_throw(int argc, const char* const* argv) const {
@@ -105,28 +135,26 @@ public:
         if (!res) {
             throw std::runtime_error(res.error().to_string());
         }
-        return std::move(*res);
+        return *res;
     }
 
-    /**
-     * @brief Parse arguments or print error and exit with code 1.
-     */
     [[nodiscard]] parse_result parse_or_exit(int argc, const char* const* argv) const {
         auto res = parse_args(argc, argv);
         if (!res) {
-            std::cerr << res.error().to_string() << "\n\n";
-            std::cerr << format_help() << "\n";
+            compat::println(std::cerr, "{}", res.error().to_string());
+            compat::println(std::cerr);
+            compat::print(std::cerr, "{}", format_help());
             std::exit(1);
         }
         if (res->has("--help") || res->has("-h")) {
-            std::cout << format_help();
+            compat::print("{}", format_help());
             std::exit(0);
         }
         if (res->has("--version")) {
-            std::cout << format_version();
+            compat::print("{}", format_version());
             std::exit(0);
         }
-        return std::move(*res);
+        return *res;
     }
 
     // Accessors
@@ -145,7 +173,7 @@ private:
     std::vector<argument_group> m_groups;
 };
 
-inline argument& argument_group::add_argument(std::string_view name, std::string_view short_name) {
+inline argument& argument_group::add_argument(string_view name, string_view short_name) {
     auto& arg = m_parent->add_argument(name, short_name);
     arg.group_id(m_id);
     register_argument_name(name);

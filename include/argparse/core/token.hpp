@@ -1,7 +1,6 @@
 #pragma once
 
-#include <optional>
-#include <string_view>
+#include <argparse/compat/string_view.hpp>
 
 namespace argparse {
 
@@ -14,9 +13,14 @@ enum class token_type {
 
 struct token {
     token_type type{token_type::positional};
-    std::string_view raw{};
-    std::string_view name{};
-    std::optional<std::string_view> inline_value{};
+    string_view raw{};
+    string_view name{};
+    bool has_inline_value{false};
+    string_view inline_value{};
+
+    constexpr token() noexcept = default;
+    constexpr token(token_type t, string_view r, string_view n, bool has_val, string_view val) noexcept
+        : type(t), raw(r), name(n), has_inline_value(has_val), inline_value(val) {}
 };
 
 } // namespace argparse

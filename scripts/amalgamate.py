@@ -10,10 +10,16 @@ import re
 from pathlib import Path
 
 HEADER_ORDER = [
+    "compat/detect.hpp",
+    "compat/string_view.hpp",
+    "compat/span.hpp",
+    "compat/expected.hpp",
+    "compat/traits.hpp",
+    "compat/print.hpp",
     "core/error.hpp",
     "core/traits.hpp",
-    "core/value_parser.hpp",
     "core/token.hpp",
+    "core/value_parser.hpp",
     "config/action.hpp",
     "config/argument.hpp",
     "config/argument_group.hpp",
@@ -21,11 +27,12 @@ HEADER_ORDER = [
     "engine/tokenizer.hpp",
     "engine/engine.hpp",
     "format/formatter.hpp",
+    "model/cli_model.hpp",
     "config/parser.hpp",
 ]
 
 BANNER = """// ============================================================================
-// argparse: High-performance, type-safe, zero-overhead C++23 argument parser
+// argparse: High-performance, multi-standard (C++11/17/20/23) argument parser
 // https://github.com/modern-cpp/argparse
 // Distributed under the MIT License.
 // ============================================================================
@@ -59,19 +66,13 @@ def amalgamate():
                     continue
                 if argparse_include_re.match(line):
                     continue
-                m = std_include_re.match(line)
-                if m:
-                    std_includes.add(m.group(1))
-                    continue
+                # Keep conditional/guarded includes as is, only extract top level unconditional std headers
                 cleaned_lines.append(line)
 
         content = "".join(cleaned_lines).strip()
         file_contents.append(f"// --- Begin: {rel_path} ---\n{content}\n// --- End: {rel_path} ---\n")
 
-    sorted_std_includes = sorted(list(std_includes))
-    include_block = "\n".join(f"#include <{inc}>" for inc in sorted_std_includes)
-
-    final_content = BANNER + include_block + "\n\n" + "\n\n".join(file_contents) + "\n"
+    final_content = BANNER + "\n\n" + "\n\n".join(file_contents) + "\n"
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(final_content)
