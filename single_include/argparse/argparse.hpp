@@ -42,12 +42,6 @@
 // Detect std::expected (C++23)
 #if defined(__cpp_lib_expected) && __cpp_lib_expected >= 202202L
     #define ARGPARSE_HAS_STD_EXPECTED 1
-#elif defined(__has_include)
-    #if __has_include(<expected>) && ARGPARSE_CPLUSPLUS >= 202302L
-        #define ARGPARSE_HAS_STD_EXPECTED 1
-    #else
-        #define ARGPARSE_HAS_STD_EXPECTED 0
-    #endif
 #else
     #define ARGPARSE_HAS_STD_EXPECTED 0
 #endif
@@ -512,8 +506,8 @@
 
         bool m_has_value;
         union {
-            typename std::aligned_storage<sizeof(T), alignof(T)>::type m_val;
-            typename std::aligned_storage<sizeof(E), alignof(E)>::type m_err;
+            alignas(T) unsigned char m_val[sizeof(T)];
+            alignas(E) unsigned char m_err[sizeof(E)];
         };
     };
 
@@ -593,7 +587,7 @@
         }
 
         bool m_has_value;
-        typename std::aligned_storage<sizeof(E), alignof(E)>::type m_err;
+        alignas(E) unsigned char m_err[sizeof(E)];
     };
 
     } // namespace compat
@@ -2596,4 +2590,3 @@ inline argument& argument_group::add_argument(string_view name, string_view shor
 
 } // namespace argparse
 // --- End: config/parser.hpp ---
-

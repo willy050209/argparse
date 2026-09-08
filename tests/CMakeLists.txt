@@ -9,6 +9,7 @@ endfunction()
 add_argparse_test(test_primitive_parsing)
 add_argparse_test(test_flag_chaining)
 add_argparse_test(test_constraints)
+add_argparse_test(test_compat_detect)
 add_argparse_test(test_error_handling)
 add_argparse_test(test_model_export)
 

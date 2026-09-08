@@ -34,12 +34,6 @@
 // Detect std::expected (C++23)
 #if defined(__cpp_lib_expected) && __cpp_lib_expected >= 202202L
     #define ARGPARSE_HAS_STD_EXPECTED 1
-#elif defined(__has_include)
-    #if __has_include(<expected>) && ARGPARSE_CPLUSPLUS >= 202302L
-        #define ARGPARSE_HAS_STD_EXPECTED 1
-    #else
-        #define ARGPARSE_HAS_STD_EXPECTED 0
-    #endif
 #else
     #define ARGPARSE_HAS_STD_EXPECTED 0
 #endif

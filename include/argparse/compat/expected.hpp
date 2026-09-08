@@ -199,8 +199,8 @@
 
         bool m_has_value;
         union {
-            typename std::aligned_storage<sizeof(T), alignof(T)>::type m_val;
-            typename std::aligned_storage<sizeof(E), alignof(E)>::type m_err;
+            alignas(T) unsigned char m_val[sizeof(T)];
+            alignas(E) unsigned char m_err[sizeof(E)];
         };
     };
 
@@ -280,7 +280,7 @@
         }
 
         bool m_has_value;
-        typename std::aligned_storage<sizeof(E), alignof(E)>::type m_err;
+        alignas(E) unsigned char m_err[sizeof(E)];
     };
 
     } // namespace compat
