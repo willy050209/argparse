@@ -3,7 +3,6 @@
 #include <argparse/config/action.hpp>
 #include <argparse/config/argument.hpp>
 #include <argparse/config/argument_group.hpp>
-
 #include <sstream>
 #include <string>
 #include <vector>
@@ -34,15 +33,21 @@ struct cli_model {
 
     [[nodiscard]] std::string to_json() const {
         std::ostringstream oss;
-        auto escape_json = [](const std::string& s) -> std::string {
+        auto escape_json = [](const std::string &s) -> std::string {
             std::string out;
             for (char c : s) {
-                if (c == '"') out += "\\\"";
-                else if (c == '\\') out += "\\\\";
-                else if (c == '\n') out += "\\n";
-                else if (c == '\r') out += "\\r";
-                else if (c == '\t') out += "\\t";
-                else out += c;
+                if (c == '"')
+                    out += "\\\"";
+                else if (c == '\\')
+                    out += "\\\\";
+                else if (c == '\n')
+                    out += "\\n";
+                else if (c == '\r')
+                    out += "\\r";
+                else if (c == '\t')
+                    out += "\\t";
+                else
+                    out += c;
             }
             return out;
         };
@@ -54,7 +59,7 @@ struct cli_model {
         oss << "  \"arguments\": [\n";
 
         for (size_t i = 0; i < arguments.size(); ++i) {
-            const auto& a = arguments[i];
+            const auto &a = arguments[i];
             oss << "    {\n";
             oss << "      \"name\": \"" << escape_json(a.name) << "\",\n";
             oss << "      \"short_name\": \"" << escape_json(a.short_name) << "\",\n";
@@ -68,7 +73,8 @@ struct cli_model {
             oss << "      \"choices\": [";
             for (size_t c = 0; c < a.choices.size(); ++c) {
                 oss << "\"" << escape_json(a.choices[c]) << "\"";
-                if (c + 1 < a.choices.size()) oss << ", ";
+                if (c + 1 < a.choices.size())
+                    oss << ", ";
             }
             oss << "]\n";
             oss << "    }" << (i + 1 < arguments.size() ? "," : "") << "\n";
@@ -80,7 +86,8 @@ struct cli_model {
             oss << "    [";
             for (size_t m = 0; m < mutually_exclusive_groups[g].size(); ++m) {
                 oss << "\"" << escape_json(mutually_exclusive_groups[g][m]) << "\"";
-                if (m + 1 < mutually_exclusive_groups[g].size()) oss << ", ";
+                if (m + 1 < mutually_exclusive_groups[g].size())
+                    oss << ", ";
             }
             oss << "]" << (g + 1 < mutually_exclusive_groups.size() ? "," : "") << "\n";
         }

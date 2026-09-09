@@ -9,7 +9,7 @@ int main() {
     parser.add_argument("--count", "-c").default_value<int32_t>(42);
     parser.add_argument("-v").flag();
 
-    std::vector<argparse::string_view> args = { "-m", "world", "-v", "-c", "99" };
+    std::vector<argparse::string_view> args = {"-m", "world", "-v", "-c", "99"};
     auto res = parser.parse_args(args);
 
     assert(res.has_value());

@@ -12,7 +12,6 @@
 #include <argparse/engine/parse_result.hpp>
 #include <argparse/format/formatter.hpp>
 #include <argparse/model/cli_model.hpp>
-
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -28,41 +27,41 @@ public:
         add_argument("--help", "-h").help("Show this help message and exit").flag();
     }
 
-    argument_parser& description(string_view desc) {
+    argument_parser &description(string_view desc) {
         m_description = std::string(desc.data(), desc.size());
         return *this;
     }
 
-    argument_parser& epilog(string_view epi) {
+    argument_parser &epilog(string_view epi) {
         m_epilog = std::string(epi.data(), epi.size());
         return *this;
     }
 
-    argument_parser& version(string_view ver) {
+    argument_parser &version(string_view ver) {
         m_version = std::string(ver.data(), ver.size());
         return *this;
     }
 
-    argument& add_argument(string_view name, string_view short_name = "") {
+    argument &add_argument(string_view name, string_view short_name = "") {
         m_arguments.emplace_back(name, short_name);
         return m_arguments.back();
     }
 
-    argument_group& add_mutually_exclusive_group(bool required = false) {
+    argument_group &add_mutually_exclusive_group(bool required = false) {
         size_t id = m_groups.size();
         m_groups.emplace_back(id, *this, true, required);
         return m_groups.back();
     }
 
-    argument_group& add_group(bool required = false) {
+    argument_group &add_group(bool required = false) {
         size_t id = m_groups.size();
         m_groups.emplace_back(id, *this, false, required);
         return m_groups.back();
     }
 
     [[nodiscard]] std::string format_help() const {
-        return formatter::format_help(string_view(m_program_name), string_view(m_description),
-                                     string_view(m_epilog), m_arguments, m_groups);
+        return formatter::format_help(string_view(m_program_name), string_view(m_description), string_view(m_epilog),
+                                      m_arguments, m_groups);
     }
 
     [[nodiscard]] std::string format_version() const {
@@ -76,7 +75,7 @@ public:
         model.epilog = m_epilog;
         model.version = m_version;
 
-        for (const auto& arg : m_arguments) {
+        for (const auto &arg : m_arguments) {
             argument_model am;
             am.name = arg.name();
             am.short_name = arg.short_name();
@@ -92,7 +91,7 @@ public:
             model.arguments.push_back(std::move(am));
         }
 
-        for (const auto& grp : m_groups) {
+        for (const auto &grp : m_groups) {
             if (grp.is_mutually_exclusive()) {
                 model.mutually_exclusive_groups.push_back(grp.argument_names());
             }
@@ -100,17 +99,13 @@ public:
         return model;
     }
 
-    [[nodiscard]] std::string to_json() const {
-        return export_model().to_json();
-    }
+    [[nodiscard]] std::string to_json() const { return export_model().to_json(); }
 
-    [[nodiscard]] expected<parse_result, parse_error>
-    parse_args(span<const string_view> args) const noexcept {
+    [[nodiscard]] expected<parse_result, parse_error> parse_args(span<const string_view> args) const noexcept {
         return engine::parse(m_arguments, m_groups, args);
     }
 
-    [[nodiscard]] expected<parse_result, parse_error>
-    parse_args(int argc, const char* const* argv) const {
+    [[nodiscard]] expected<parse_result, parse_error> parse_args(int argc, const char *const *argv) const {
         if (argc <= 1) {
             return parse_args(span<const string_view>{});
         }
@@ -130,7 +125,7 @@ public:
         return *res;
     }
 
-    [[nodiscard]] parse_result parse_or_throw(int argc, const char* const* argv) const {
+    [[nodiscard]] parse_result parse_or_throw(int argc, const char *const *argv) const {
         auto res = parse_args(argc, argv);
         if (!res) {
             throw std::runtime_error(res.error().to_string());
@@ -138,7 +133,7 @@ public:
         return *res;
     }
 
-    [[nodiscard]] parse_result parse_or_exit(int argc, const char* const* argv) const {
+    [[nodiscard]] parse_result parse_or_exit(int argc, const char *const *argv) const {
         auto res = parse_args(argc, argv);
         if (!res) {
             compat::println(std::cerr, "{}", res.error().to_string());
@@ -158,11 +153,11 @@ public:
     }
 
     // Accessors
-    [[nodiscard]] const std::string& program_name() const noexcept { return m_program_name; }
-    [[nodiscard]] const std::string& get_description() const noexcept { return m_description; }
-    [[nodiscard]] const std::string& get_version() const noexcept { return m_version; }
-    [[nodiscard]] const std::vector<argument>& arguments() const noexcept { return m_arguments; }
-    [[nodiscard]] const std::vector<argument_group>& groups() const noexcept { return m_groups; }
+    [[nodiscard]] const std::string &program_name() const noexcept { return m_program_name; }
+    [[nodiscard]] const std::string &get_description() const noexcept { return m_description; }
+    [[nodiscard]] const std::string &get_version() const noexcept { return m_version; }
+    [[nodiscard]] const std::vector<argument> &arguments() const noexcept { return m_arguments; }
+    [[nodiscard]] const std::vector<argument_group> &groups() const noexcept { return m_groups; }
 
 private:
     std::string m_program_name;
@@ -173,8 +168,8 @@ private:
     std::vector<argument_group> m_groups;
 };
 
-inline argument& argument_group::add_argument(string_view name, string_view short_name) {
-    auto& arg = m_parent->add_argument(name, short_name);
+inline argument &argument_group::add_argument(string_view name, string_view short_name) {
+    auto &arg = m_parent->add_argument(name, short_name);
     arg.group_id(m_id);
     register_argument_name(name);
     return arg;

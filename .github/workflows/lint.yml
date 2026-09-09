@@ -8,8 +8,15 @@ on:
 
 jobs:
   clang-format:
-    name: Clang-Format Style Check
+    name: Clang-Format Style Check (${{ matrix.path }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        path:
+          - 'include'
+          - 'tests'
+          - 'examples'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,5 +25,5 @@ jobs:
         uses: jidicula/clang-format-action@v4.14.0
         with:
           clang-format-version: '18'
-          check-path: 'include tests examples'
+          check-path: ${{ matrix.path }}
           fallback-style: 'LLVM'

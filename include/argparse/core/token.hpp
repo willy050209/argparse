@@ -5,10 +5,10 @@
 namespace argparse {
 
 enum class token_type {
-    long_option,       // e.g. --verbose or --port=8080
-    short_option,      // e.g. -v or -p8080 or chained -xvf
-    positional,        // e.g. filename.txt
-    options_delimiter  // explicitly --
+    long_option,      // e.g. --verbose or --port=8080
+    short_option,     // e.g. -v or -p8080 or chained -xvf
+    positional,       // e.g. filename.txt
+    options_delimiter // explicitly --
 };
 
 struct token {

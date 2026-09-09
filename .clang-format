@@ -24,4 +24,4 @@ BreakConstructorInitializers: BeforeColon
 IncludeBlocks: Regroup
 SortIncludes: CaseSensitive
 SpacesInAngles: Never
-SpacesInSquareBrackets: Never
+SpacesInSquareBrackets: false

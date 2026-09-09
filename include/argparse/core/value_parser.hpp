@@ -1,12 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <argparse/compat/detect.hpp>
 #include <argparse/compat/expected.hpp>
 #include <argparse/compat/string_view.hpp>
 #include <argparse/compat/traits.hpp>
 #include <argparse/core/error.hpp>
-
-#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <cstdlib>
@@ -14,21 +13,21 @@
 #include <vector>
 
 #if defined(__has_include)
-    #if __has_include(<charconv>) && ARGPARSE_CPLUSPLUS >= 201703L
-        #include <charconv>
-        #define ARGPARSE_HAS_CHARCONV_HEADER 1
-    #else
-        #define ARGPARSE_HAS_CHARCONV_HEADER 0
-    #endif
-    #if __has_include(<filesystem>) && ARGPARSE_CPLUSPLUS >= 201703L
-        #include <filesystem>
-        #define ARGPARSE_HAS_STD_FILESYSTEM 1
-    #else
-        #define ARGPARSE_HAS_STD_FILESYSTEM 0
-    #endif
+#if __has_include(<charconv>) && ARGPARSE_CPLUSPLUS >= 201703L
+#include <charconv>
+#define ARGPARSE_HAS_CHARCONV_HEADER 1
 #else
-    #define ARGPARSE_HAS_CHARCONV_HEADER 0
-    #define ARGPARSE_HAS_STD_FILESYSTEM 0
+#define ARGPARSE_HAS_CHARCONV_HEADER 0
+#endif
+#if __has_include(<filesystem>) && ARGPARSE_CPLUSPLUS >= 201703L
+#include <filesystem>
+#define ARGPARSE_HAS_STD_FILESYSTEM 1
+#else
+#define ARGPARSE_HAS_STD_FILESYSTEM 0
+#endif
+#else
+#define ARGPARSE_HAS_CHARCONV_HEADER 0
+#define ARGPARSE_HAS_STD_FILESYSTEM 0
 #endif
 
 namespace argparse {
@@ -36,10 +35,10 @@ namespace argparse {
 namespace detail {
 
 [[nodiscard]] inline bool iequals(string_view lhs, string_view rhs) noexcept {
-    if (lhs.size() != rhs.size()) return false;
+    if (lhs.size() != rhs.size())
+        return false;
     for (size_t i = 0; i < lhs.size(); ++i) {
-        if (std::tolower(static_cast<unsigned char>(lhs[i])) !=
-            std::tolower(static_cast<unsigned char>(rhs[i]))) {
+        if (std::tolower(static_cast<unsigned char>(lhs[i])) != std::tolower(static_cast<unsigned char>(rhs[i]))) {
             return false;
         }
     }
@@ -59,7 +58,8 @@ inline IntT apply_sign(IntT val, bool /*negative*/, std::false_type) noexcept {
 template <typename IntT>
 [[nodiscard]] expected<IntT, parse_error> parse_integral(string_view sv) noexcept {
     if (sv.empty()) {
-        return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Empty string cannot be parsed as integer"});
+        return unexpected<parse_error>(
+            parse_error{error_code::invalid_value, sv, "Empty string cannot be parsed as integer"});
     }
 
     int base = 10;
@@ -68,7 +68,8 @@ template <typename IntT>
 
     if (starts_with(num_part, '-')) {
         if (std::is_unsigned<IntT>::value) {
-            return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Cannot parse negative number into unsigned type"});
+            return unexpected<parse_error>(
+                parse_error{error_code::invalid_value, sv, "Cannot parse negative number into unsigned type"});
         }
         negative = true;
         num_part.remove_prefix(1);
@@ -102,13 +103,14 @@ template <typename IntT>
     return val;
 #else
     std::string s(num_part.data(), num_part.size());
-    char* endptr = nullptr;
+    char *endptr = nullptr;
     if (std::is_signed<IntT>::value) {
         long long res = std::strtoll(s.c_str(), &endptr, base);
         if (endptr != s.c_str() + s.size()) {
             return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Invalid integer literal"});
         }
-        if (negative) res = -res;
+        if (negative)
+            res = -res;
         return static_cast<IntT>(res);
     } else {
         unsigned long long res = std::strtoull(s.c_str(), &endptr, base);
@@ -128,14 +130,12 @@ template <typename IntT>
 template <>
 struct value_parser<bool> {
     [[nodiscard]] static expected<bool, parse_error> parse(string_view sv) noexcept {
-        if (detail::iequals(sv, "true") || detail::iequals(sv, "1") ||
-            detail::iequals(sv, "yes") || detail::iequals(sv, "on") ||
-            detail::iequals(sv, "t") || detail::iequals(sv, "y")) {
+        if (detail::iequals(sv, "true") || detail::iequals(sv, "1") || detail::iequals(sv, "yes") ||
+            detail::iequals(sv, "on") || detail::iequals(sv, "t") || detail::iequals(sv, "y")) {
             return true;
         }
-        if (detail::iequals(sv, "false") || detail::iequals(sv, "0") ||
-            detail::iequals(sv, "no") || detail::iequals(sv, "off") ||
-            detail::iequals(sv, "f") || detail::iequals(sv, "n")) {
+        if (detail::iequals(sv, "false") || detail::iequals(sv, "0") || detail::iequals(sv, "no") ||
+            detail::iequals(sv, "off") || detail::iequals(sv, "f") || detail::iequals(sv, "n")) {
             return false;
         }
         return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Cannot parse value as boolean"});
@@ -159,21 +159,24 @@ template <typename FloatT>
 struct value_parser<FloatT, enable_if_t<std::is_floating_point<FloatT>::value>> {
     [[nodiscard]] static expected<FloatT, parse_error> parse(string_view sv) noexcept {
         if (sv.empty()) {
-            return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Empty string cannot be parsed as float"});
+            return unexpected<parse_error>(
+                parse_error{error_code::invalid_value, sv, "Empty string cannot be parsed as float"});
         }
 #if ARGPARSE_HAS_CHARCONV_HEADER && defined(__cpp_lib_to_chars) && (__cpp_lib_to_chars >= 201611L)
         FloatT val{};
         auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), val);
         if (ec != std::errc{} || ptr != sv.data() + sv.size()) {
-            return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Invalid floating-point literal"});
+            return unexpected<parse_error>(
+                parse_error{error_code::invalid_value, sv, "Invalid floating-point literal"});
         }
         return val;
 #else
         std::string s(sv.data(), sv.size());
-        char* endptr = nullptr;
+        char *endptr = nullptr;
         double val = std::strtod(s.c_str(), &endptr);
         if (endptr != s.c_str() + s.size()) {
-            return unexpected<parse_error>(parse_error{error_code::invalid_value, sv, "Invalid floating-point literal"});
+            return unexpected<parse_error>(
+                parse_error{error_code::invalid_value, sv, "Invalid floating-point literal"});
         }
         return static_cast<FloatT>(val);
 #endif
@@ -192,9 +195,7 @@ struct value_parser<std::string> {
 
 template <>
 struct value_parser<string_view> {
-    [[nodiscard]] static expected<string_view, parse_error> parse(string_view sv) noexcept {
-        return sv;
-    }
+    [[nodiscard]] static expected<string_view, parse_error> parse(string_view sv) noexcept { return sv; }
 };
 
 // ==========================================

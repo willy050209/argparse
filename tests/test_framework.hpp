@@ -15,12 +15,12 @@ struct test_case {
     std::function<void()> func;
 };
 
-inline std::vector<test_case>& registry() {
+inline std::vector<test_case> &registry() {
     static std::vector<test_case> tests;
     return tests;
 }
 
-inline bool register_test(const std::string& name, std::function<void()> func) {
+inline bool register_test(const std::string &name, std::function<void()> func) {
     registry().push_back(test_case{name, std::move(func)});
     return true;
 }
@@ -31,13 +31,13 @@ inline int run_all() {
 
     std::cout << "[==========] Running " << registry().size() << " test(s).\n";
 
-    for (const auto& tc : registry()) {
+    for (const auto &tc : registry()) {
         std::cout << "[ RUN      ] " << tc.name << "\n";
         try {
             tc.func();
             std::cout << "[       OK ] " << tc.name << "\n";
             passed++;
-        } catch (const std::exception& ex) {
+        } catch (const std::exception &ex) {
             std::cerr << "[  FAILED  ] " << tc.name << ": " << ex.what() << "\n";
             failed++;
         } catch (...) {
@@ -58,58 +58,56 @@ inline int run_all() {
 struct assertion_failure : public std::exception {
     std::string msg;
     explicit assertion_failure(std::string m) : msg(std::move(m)) {}
-    [[nodiscard]] const char* what() const noexcept override {
-        return msg.c_str();
-    }
+    [[nodiscard]] const char *what() const noexcept override { return msg.c_str(); }
 };
 
 } // namespace test_framework
 
 #if defined(__GNUC__) || defined(__clang__)
-    #define ARGPARSE_UNUSED_TEST __attribute__((unused))
+#define ARGPARSE_UNUSED_TEST __attribute__((unused))
 #else
-    #define ARGPARSE_UNUSED_TEST
+#define ARGPARSE_UNUSED_TEST
 #endif
 
-#define TEST_CASE(name) \
-    static void name() ARGPARSE_UNUSED_TEST; \
-    namespace { \
-        const bool name##_registered ARGPARSE_UNUSED_TEST = ::test_framework::register_test(#name, name); \
-    } \
+#define TEST_CASE(name)                                                                                                \
+    static void name() ARGPARSE_UNUSED_TEST;                                                                           \
+    namespace {                                                                                                        \
+    const bool name##_registered ARGPARSE_UNUSED_TEST = ::test_framework::register_test(#name, name);                  \
+    }                                                                                                                  \
     static void name()
 
-#define ASSERT_TRUE(expr) \
-    do { \
-        if (!(expr)) { \
-            std::ostringstream oss; \
-            oss << "Assertion failed: (" << #expr << ") at " << __FILE__ << ":" << __LINE__; \
-            throw ::test_framework::assertion_failure(oss.str()); \
-        } \
+#define ASSERT_TRUE(expr)                                                                                              \
+    do {                                                                                                               \
+        if (!(expr)) {                                                                                                 \
+            std::ostringstream oss;                                                                                    \
+            oss << "Assertion failed: (" << #expr << ") at " << __FILE__ << ":" << __LINE__;                           \
+            throw ::test_framework::assertion_failure(oss.str());                                                      \
+        }                                                                                                              \
     } while (false)
 
-#define ASSERT_FALSE(expr) \
-    do { \
-        if (expr) { \
-            std::ostringstream oss; \
-            oss << "Assertion failed: !(" << #expr << ") at " << __FILE__ << ":" << __LINE__; \
-            throw ::test_framework::assertion_failure(oss.str()); \
-        } \
+#define ASSERT_FALSE(expr)                                                                                             \
+    do {                                                                                                               \
+        if (expr) {                                                                                                    \
+            std::ostringstream oss;                                                                                    \
+            oss << "Assertion failed: !(" << #expr << ") at " << __FILE__ << ":" << __LINE__;                          \
+            throw ::test_framework::assertion_failure(oss.str());                                                      \
+        }                                                                                                              \
     } while (false)
 
-#define ASSERT_EQ(lhs, rhs) \
-    do { \
-        if (!((lhs) == (rhs))) { \
-            std::ostringstream oss; \
-            oss << "Assertion failed: " << #lhs << " == " << #rhs << " at " << __FILE__ << ":" << __LINE__; \
-            throw ::test_framework::assertion_failure(oss.str()); \
-        } \
+#define ASSERT_EQ(lhs, rhs)                                                                                            \
+    do {                                                                                                               \
+        if (!((lhs) == (rhs))) {                                                                                       \
+            std::ostringstream oss;                                                                                    \
+            oss << "Assertion failed: " << #lhs << " == " << #rhs << " at " << __FILE__ << ":" << __LINE__;            \
+            throw ::test_framework::assertion_failure(oss.str());                                                      \
+        }                                                                                                              \
     } while (false)
 
-#define ASSERT_NE(lhs, rhs) \
-    do { \
-        if ((lhs) == (rhs)) { \
-            std::ostringstream oss; \
-            oss << "Assertion failed: " << #lhs << " != " << #rhs << " at " << __FILE__ << ":" << __LINE__; \
-            throw ::test_framework::assertion_failure(oss.str()); \
-        } \
+#define ASSERT_NE(lhs, rhs)                                                                                            \
+    do {                                                                                                               \
+        if ((lhs) == (rhs)) {                                                                                          \
+            std::ostringstream oss;                                                                                    \
+            oss << "Assertion failed: " << #lhs << " != " << #rhs << " at " << __FILE__ << ":" << __LINE__;            \
+            throw ::test_framework::assertion_failure(oss.str());                                                      \
+        }                                                                                                              \
     } while (false)

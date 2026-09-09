@@ -1,4 +1,5 @@
 #include "test_framework.hpp"
+
 #include <argparse/argparse.hpp>
 
 TEST_CASE(test_required_argument_missing) {
@@ -18,7 +19,7 @@ TEST_CASE(test_choices_validation) {
 
     // Valid choice
     {
-        std::vector<argparse::string_view> valid_args = { "--format", "json" };
+        std::vector<argparse::string_view> valid_args = {"--format", "json"};
         auto res = parser.parse_args(valid_args);
         ASSERT_TRUE(res.has_value());
         ASSERT_EQ((*res).get<std::string>("--format"), "json");
@@ -26,7 +27,7 @@ TEST_CASE(test_choices_validation) {
 
     // Invalid choice
     {
-        std::vector<argparse::string_view> invalid_args = { "--format", "binary" };
+        std::vector<argparse::string_view> invalid_args = {"--format", "binary"};
         auto res = parser.parse_args(invalid_args);
         ASSERT_FALSE(res.has_value());
         ASSERT_EQ(res.error().code, argparse::error_code::choice_not_allowed);
@@ -35,11 +36,11 @@ TEST_CASE(test_choices_validation) {
 
 TEST_CASE(test_mutually_exclusive_group_conflict) {
     argparse::argument_parser parser("test");
-    auto& group = parser.add_mutually_exclusive_group();
+    auto &group = parser.add_mutually_exclusive_group();
     group.add_argument("--tcp").flag();
     group.add_argument("--udp").flag();
 
-    std::vector<argparse::string_view> args = { "--tcp", "--udp" };
+    std::vector<argparse::string_view> args = {"--tcp", "--udp"};
     auto res = parser.parse_args(args);
 
     ASSERT_FALSE(res.has_value());
@@ -48,7 +49,7 @@ TEST_CASE(test_mutually_exclusive_group_conflict) {
 
 TEST_CASE(test_mutually_exclusive_group_required) {
     argparse::argument_parser parser("test");
-    auto& group = parser.add_mutually_exclusive_group(true);
+    auto &group = parser.add_mutually_exclusive_group(true);
     group.add_argument("--client").flag();
     group.add_argument("--server").flag();
 
@@ -62,7 +63,7 @@ TEST_CASE(test_mutually_exclusive_group_required) {
 
     // Exactly one provided
     {
-        std::vector<argparse::string_view> args = { "--server" };
+        std::vector<argparse::string_view> args = {"--server"};
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
         ASSERT_TRUE((*res).get<bool>("--server"));
@@ -74,13 +75,12 @@ TEST_CASE(test_custom_typed_validator) {
     argparse::argument_parser parser("test");
     parser.add_argument("--port", "-p")
         .default_value<int32_t>(8080)
-        .validator<int32_t>([](int32_t p) {
-            return p >= 1024 && p <= 65535;
-        }, "Port must be in unprivileged range 1024-65535");
+        .validator<int32_t>([](int32_t p) { return p >= 1024 && p <= 65535; },
+                            "Port must be in unprivileged range 1024-65535");
 
     // Valid
     {
-        std::vector<argparse::string_view> args = { "-p", "3000" };
+        std::vector<argparse::string_view> args = {"-p", "3000"};
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
         ASSERT_EQ((*res).get<int32_t>("-p"), 3000);
@@ -88,7 +88,7 @@ TEST_CASE(test_custom_typed_validator) {
 
     // Invalid (privileged port)
     {
-        std::vector<argparse::string_view> args = { "-p", "80" };
+        std::vector<argparse::string_view> args = {"-p", "80"};
         auto res = parser.parse_args(args);
         ASSERT_FALSE(res.has_value());
         ASSERT_EQ(res.error().code, argparse::error_code::custom_validation_failed);
@@ -112,7 +112,7 @@ TEST_CASE(test_defaults_and_implicit_values) {
 
     // Explicitly provided with value
     {
-        std::vector<argparse::string_view> args = { "--color", "never" };
+        std::vector<argparse::string_view> args = {"--color", "never"};
         auto res = parser.parse_args(args);
         ASSERT_TRUE(res.has_value());
         ASSERT_EQ((*res).get<std::string>("--color"), "never");

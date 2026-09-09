@@ -1,4 +1,5 @@
 #include "test_framework.hpp"
+
 #include <argparse/argparse.hpp>
 
 TEST_CASE(test_short_flag_chaining) {
@@ -7,7 +8,7 @@ TEST_CASE(test_short_flag_chaining) {
     parser.add_argument("--verbose", "-v").flag();
     parser.add_argument("--force", "-f").flag();
 
-    std::vector<argparse::string_view> args = { "-xvf" };
+    std::vector<argparse::string_view> args = {"-xvf"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
@@ -25,7 +26,7 @@ TEST_CASE(test_flag_chaining_with_value_suffix) {
     parser.add_argument("--long-list", "-l").flag();
     parser.add_argument("--output", "-o");
 
-    std::vector<argparse::string_view> args = { "-alooutput.log" };
+    std::vector<argparse::string_view> args = {"-alooutput.log"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
@@ -39,7 +40,7 @@ TEST_CASE(test_flag_chaining_with_next_arg_value) {
     parser.add_argument("--all", "-a").flag();
     parser.add_argument("--output", "-o");
 
-    std::vector<argparse::string_view> args = { "-ao", "target.bin" };
+    std::vector<argparse::string_view> args = {"-ao", "target.bin"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
@@ -51,7 +52,7 @@ TEST_CASE(test_count_flag) {
     argparse::argument_parser parser("test");
     parser.add_argument("--verbose", "-v").count();
 
-    std::vector<argparse::string_view> args = { "-v", "-v", "-v" };
+    std::vector<argparse::string_view> args = {"-v", "-v", "-v"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
@@ -63,10 +64,7 @@ TEST_CASE(test_inline_equals_syntax) {
     parser.add_argument("--output", "-o");
     parser.add_argument("--level", "-l").default_value<int32_t>(0);
 
-    std::vector<argparse::string_view> args = {
-        "--output=dist/bundle.js",
-        "-l=4"
-    };
+    std::vector<argparse::string_view> args = {"--output=dist/bundle.js", "-l=4"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
@@ -79,19 +77,14 @@ TEST_CASE(test_delimiter_double_dash) {
     parser.add_argument("--flag", "-f").flag();
     parser.add_argument("cmd");
 
-    std::vector<argparse::string_view> args = {
-        "-f",
-        "--",
-        "--not-an-option",
-        "-x"
-    };
+    std::vector<argparse::string_view> args = {"-f", "--", "--not-an-option", "-x"};
 
     auto res = parser.parse_args(args);
     ASSERT_TRUE(res.has_value());
     ASSERT_TRUE((*res).get<bool>("-f"));
     ASSERT_EQ((*res).get<std::string>("cmd"), "--not-an-option");
 
-    const auto& extra = (*res).positionals();
+    const auto &extra = (*res).positionals();
     ASSERT_EQ(extra.size(), 1u);
     ASSERT_EQ(extra[0], "-x");
 }

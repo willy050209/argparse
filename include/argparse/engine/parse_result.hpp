@@ -7,7 +7,6 @@
 #include <argparse/compat/traits.hpp>
 #include <argparse/core/error.hpp>
 #include <argparse/core/value_parser.hpp>
-
 #include <cstddef>
 #include <cstdint>
 #include <sstream>
@@ -18,40 +17,40 @@
 #include <vector>
 
 #if ARGPARSE_HAS_STD_FORMAT
-    #include <format>
+#include <format>
 #endif
 
 namespace argparse {
 
 namespace detail {
-    template <typename T>
-    struct try_get_helper {
-        static expected<T, parse_error> parse(const std::vector<std::string>& vals, string_view) {
-            return value_parser<T>::parse(string_view(vals.back()));
-        }
-    };
+template <typename T>
+struct try_get_helper {
+    static expected<T, parse_error> parse(const std::vector<std::string> &vals, string_view) {
+        return value_parser<T>::parse(string_view(vals.back()));
+    }
+};
 
-    template <typename T, typename Alloc>
-    struct try_get_helper<std::vector<T, Alloc>> {
-        using VecT = std::vector<T, Alloc>;
-        static expected<VecT, parse_error> parse(const std::vector<std::string>& vals, string_view) {
-            VecT vec;
-            for (const auto& raw_val : vals) {
-                auto parsed_sub = value_parser<VecT>::parse(string_view(raw_val));
-                if (parsed_sub) {
-                    for (auto&& item : *parsed_sub) {
-                        vec.push_back(std::move(item));
-                    }
-                } else {
-                    auto single_item = value_parser<T>::parse(string_view(raw_val));
-                    if (single_item) {
-                        vec.push_back(std::move(*single_item));
-                    }
+template <typename T, typename Alloc>
+struct try_get_helper<std::vector<T, Alloc>> {
+    using VecT = std::vector<T, Alloc>;
+    static expected<VecT, parse_error> parse(const std::vector<std::string> &vals, string_view) {
+        VecT vec;
+        for (const auto &raw_val : vals) {
+            auto parsed_sub = value_parser<VecT>::parse(string_view(raw_val));
+            if (parsed_sub) {
+                for (auto &&item : *parsed_sub) {
+                    vec.push_back(std::move(item));
+                }
+            } else {
+                auto single_item = value_parser<T>::parse(string_view(raw_val));
+                if (single_item) {
+                    vec.push_back(std::move(*single_item));
                 }
             }
-            return vec;
         }
-    };
+        return vec;
+    }
+};
 } // namespace detail
 
 class parse_result {
@@ -111,7 +110,7 @@ public:
         auto it = m_values.find(std::string(canonical.data(), canonical.size()));
         if (it != m_values.end()) {
             result.reserve(it->second.size());
-            for (const auto& s : it->second) {
+            for (const auto &s : it->second) {
                 result.emplace_back(s.data(), s.size());
             }
         }
@@ -134,7 +133,8 @@ public:
         auto val = try_get<T>(name);
         if (!val) {
 #if ARGPARSE_HAS_STD_FORMAT
-            throw std::runtime_error(std::format("Argument '{}' not found or failed to convert", std::string_view(name.data(), name.size())));
+            throw std::runtime_error(std::format("Argument '{}' not found or failed to convert",
+                                                 std::string_view(name.data(), name.size())));
 #else
             std::ostringstream oss;
             oss << "Argument '" << name << "' not found or failed to convert";
@@ -153,9 +153,7 @@ public:
         return fallback;
     }
 
-    [[nodiscard]] const std::vector<std::string>& positionals() const noexcept {
-        return m_positionals;
-    }
+    [[nodiscard]] const std::vector<std::string> &positionals() const noexcept { return m_positionals; }
 
     void set_value(string_view canonical_name, std::string value, bool is_explicit = true) {
         std::string name_str(canonical_name.data(), canonical_name.size());
@@ -173,12 +171,11 @@ public:
         }
     }
 
-    void add_positional(std::string value) {
-        m_positionals.push_back(std::move(value));
-    }
+    void add_positional(std::string value) { m_positionals.push_back(std::move(value)); }
 
     void register_alias(string_view alias, string_view canonical_name) {
-        m_alias_map[std::string(alias.data(), alias.size())] = std::string(canonical_name.data(), canonical_name.size());
+        m_alias_map[std::string(alias.data(), alias.size())] =
+            std::string(canonical_name.data(), canonical_name.size());
     }
 
 private:
